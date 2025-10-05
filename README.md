@@ -4,7 +4,6 @@ It provides menu management, cart operations, and item suggestions via voice com
 ## Features
 - Fetches menu items from `/Home/GetMenu`.
 - Supports **cart management** (add/remove items).
-- Highlights and displays the "heard" item in the UI.
 - Basic voice recognition to detect item names.
 - Returns **textual responses only** via OpenAI API.
 ---
@@ -16,3 +15,4 @@ It provides menu management, cart operations, and item suggestions via voice com
 - Newtonsoft.Json for JSON handling
 ---
 ## Demo
+<a href="https://drive.google.com/file/d/1zLZkghmvo20M2CPSc7EaODmEcPN8ekkI/view?usp=sharing" target="_blank">Demo Video</a>
