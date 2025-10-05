@@ -1,6 +1,8 @@
 # Food-Ordering-with-Voice-Assistant
-It provides menu management, cart operations, and item suggestions via voice commands, but **does not support real-time speech responses**. The bot only returns **JSON data** based on your menu.
+It provides menu management, cart operations**. The bot only returns **JSON data** based on your menu.
 ---
+<img width="926" height="486" alt="image" src="https://github.com/user-attachments/assets/3fd11701-cc2b-4807-8b1c-34f83be889e4" />
+
 ## Features
 - Fetches menu items from `/Home/GetMenu`.
 - Supports **cart management** (add/remove items).
