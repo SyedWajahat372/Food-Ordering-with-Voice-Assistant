@@ -1,0 +1,412 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Voice Bot</title>
+    <style>
+        /* ---------- GLOBAL ---------- */
+        body {
+            margin: 0;
+            font-family: "Inter", Arial, sans-serif;
+            background: radial-gradient(circle at top left, #3a3a3a, #0a0a0a);
+            color: #1e1e2a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .shell {
+            background: #657aff;
+            width: 100%;
+            max-width: 1400px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        /* Top Bar Buttons */
+        .topbar {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 10px 22px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #4a67ff, #7c3eff);
+            color: #fff;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 0 5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(74,103,255,0.4);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Status */
+        #status {
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        /* LEFT PANEL */
+        .left-pane {
+            flex: 1 1 300px;
+            min-width: 280px;
+        }
+
+        /* RIGHT PANEL */
+        .right-pane {
+            flex: 2 1 600px;
+            min-width: 300px;
+        }
+
+        /* Heard Item */
+        .heard {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .heard img {
+            width: 120px;
+            height: 120px;
+            border-radius: 16px;
+            object-fit: cover;
+            border: 2px solid #ddd;
+        }
+        #heardName {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #222;
+        }
+        #heardPrice {
+            color: #4a67ff;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+        #heardDesc {
+            font-size: 0.95rem;
+            color: #555;
+        }
+
+        /* Bill / Cart */
+        .bill-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #ccc;
+        }
+        .bill-total {
+            font-weight: bold;
+            margin-top: 12px;
+            text-align: right;
+            color: #222;
+        }
+        .err {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        /* Carousel Styles */
+        .menu-carousel {
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding: 10px;
+            scroll-behavior: smooth;
+            /*background: yellow;*/
+        }
+        .carousel-item {
+            flex: 0 0 auto;
+            width: 120px;
+            height: 120px;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .carousel-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .carousel-item.selected {
+            transform: scale(1.5);
+            z-index: 10;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        /* Hide scrollbar for all browsers */
+        .menu-carousel::-webkit-scrollbar { display: none; }
+        .menu-carousel { -ms-overflow-style: none; scrollbar-width: none; }
+        .container {
+            background: #657aff;
+            /* backdrop-filter: blur(15px); */
+            /* border-radius: 20px; */
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        /* Responsive */
+        @@media (max-width: 900px) {
+            .grid {
+                flex-direction: column;
+            }
+            .carousel-item.selected {
+                transform: scale(1.3);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="shell">
+        <div class="card">
+            <h1 style="text-align:center;">Restaurant Voice Bot</h1>
+            <div class="topbar">
+                <button id="startBtn" class="btn">🎤 Start Listening</button>
+                <button id="stopBtn" class="btn" disabled>🛑 Stop</button>
+            </div>
+            <div id="status">Idle</div>
+
+            <div class="grid">
+ LEFT PANEL 
+<div class="left-pane">
+    <h3>Heard Item</h3>
+    <div id="heardBox" class="heard" style="display:none;">
+        <img id="heardImg" src="/Content/Menu/default.png">
+        <div>
+            <div id="heardName"></div>
+            <div id="heardPrice"></div>
+            <div id="heardDesc"></div>
+        </div>
+    </div>
+    <div id="notFound" class="err" style="display:none;">Item not found in menu.</div>
+
+    <h3 style="margin-top:20px;">Cart</h3>
+    <div id="cart"></div>
+    <div id="cartTotal" class="bill-total">Total: $0.00</div>
+</div>
+ RIGHT PANEL 
+<div class="right-pane">
+                    <h3>Menu</h3>
+                    <div id="menuCarousel" class="menu-carousel"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const norm = s => (s || "").toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
+
+        let MENU = [
+            { name: "Big Burger Combo", price: 14.89, description: "Beef burger with fries and a drink.", image: "/Content/Menu/Big_Burger_Combo.png" },
+            { name: "Double Cheeseburger", price: 5.79, description: "Two patties, double cheese, toasted bun.", image: "/Content/Menu/Double_Cheeseburger.png" },
+            { name: "Cheeseburger", price: 3.49, description: "Classic cheeseburger with pickles & onions.", image: "/Content/Menu/Cheeseburger.png" },
+            { name: "Hamburger", price: 2.99, description: "Simple beef burger with ketchup & pickles.", image: "/Content/Menu/hamburger.png" },
+            { name: "Crispy Chicken Sandwich", price: 4.99, description: "Crispy chicken filet with mayo & lettuce.", image: "/Content/Menu/crispy_chicken_sandwich.png" },
+            { name: "Chicken Nuggets (6 pc)", price: 4.49, description: "Six golden chicken nuggets with dip.", image: "/Content/Menu/Chicken_Nuggets__6_pc.png" },
+            { name: "Crispy Fish Sandwich", price: 5.29, description: "Fried fish fillet, tartar sauce, soft bun.", image: "/Content/Menu/Filet_Fish_Sandwich.png" },
+            { name: "Fries", price: 3.19, description: "Hot & crispy french fries.", image: "/Content/Menu/fries.png" },
+            { name: "Baked Apple Pie", price: 1.79, description: "Warm apple pie with cinnamon.", image: "/Content/Menu/Apple_Pie.png" },
+            { name: "Coca-Cola Drink", price: 1.49, description: "Chilled soft drink.", image: "/Content/Menu/Coca_Cola.png" }
+        ];
+
+        let carouselContainer;
+        let cart = [];
+
+        function renderCarousel() {
+            carouselContainer = $("menuCarousel");
+            MENU.forEach((item, i) => {
+                const div = document.createElement("div");
+                div.className = "carousel-item";
+                div.innerHTML = `<img src="${item.image}">`;
+                div.onclick = () => selectItem(i);
+                carouselContainer.appendChild(div);
+            });
+        }
+
+        function selectItem(index) {
+            const items = carouselContainer.querySelectorAll(".carousel-item");
+            items.forEach((el, i) => el.classList.remove("selected"));
+            const selected = items[index];
+            selected.classList.add("selected");
+
+            // Scroll to center
+            const carouselRect = carouselContainer.getBoundingClientRect();
+            const itemRect = selected.getBoundingClientRect();
+            const scrollLeft = carouselContainer.scrollLeft + (itemRect.left + itemRect.width / 2) - (carouselRect.left + carouselRect.width / 2);
+            carouselContainer.scroll({ left: scrollLeft, behavior: "smooth" });
+
+            showHeard(MENU[index]);
+        }
+
+        function showHeard(item) {
+            $("heardBox").style.display = "flex";
+            $("notFound").style.display = "none";
+            $("heardImg").src = item.image;
+            $("heardName").textContent = item.name;
+            $("heardPrice").textContent = "$" + item.price.toFixed(2);
+            $("heardDesc").textContent = item.description;
+
+            addToCart(item);
+        }
+
+        function showNotFound() {
+            $("heardBox").style.display = "none";
+            $("notFound").style.display = "block";
+        }
+
+        function findBestItem(text) {
+            const t = norm(text);
+            if (!t) return null;
+            let direct = MENU.find(m => norm(m.name) === t);
+            if (direct) return direct;
+            let partial = MENU.find(m => norm(m.name).includes(t));
+            if (partial) return partial;
+            const toks = t.split(" ");
+            let best = null, score = 0;
+            MENU.forEach(m => {
+                const nameToks = norm(m.name).split(" ");
+                const overlap = nameToks.filter(x => toks.includes(x) || toks.includes(x + "s")).length;
+                if (overlap > score) { score = overlap; best = m; }
+            });
+            return score > 0 ? best : null;
+        }
+
+        // Cart functions
+        function updateCartUI() {
+            const cartDiv = $("cart");
+            cartDiv.innerHTML = "";
+
+            if (cart.length === 0) {
+                cartDiv.innerHTML = "<div>Your cart is empty.</div>";
+                $("cartTotal").textContent = "Total: $0.00";
+                return;
+            }
+
+            cart.forEach((item, index) => {
+                const row = document.createElement("div");
+                row.className = "bill-row";
+                row.style.display = "flex";
+                row.style.alignItems = "center";
+                row.style.gap = "10px";
+
+                row.innerHTML = `
+            <img src="${item.image}" style="width:50px;height:50px;border-radius:8px;object-fit:cover;">
+            <div style="flex:1;">
+                <div>${item.name} x${item.quantity}</div>
+                <div style="color:#4a67ff;font-weight:bold;">$${(item.price * item.quantity).toFixed(2)}</div>
+            </div>
+            <button onclick="removeFromCart(${index})" style="background:none;border:none;color:red;cursor:pointer;font-size:1.2rem;">❌</button>
+        `;
+                cartDiv.appendChild(row);
+            });
+
+            const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            $("cartTotal").textContent = `Total: $${total.toFixed(2)}`;
+        }
+
+
+        function addToCart(item) {
+            const existing = cart.find(c => c.name === item.name);
+            if (existing) {
+                existing.quantity += 1;
+            } else {
+                cart.push({ ...item, quantity: 1 });
+            }
+            updateCartUI();
+        }
+
+        function removeFromCart(index) {
+            if (cart[index].quantity > 1) {
+                cart[index].quantity -= 1;
+            } else {
+                cart.splice(index, 1);
+            }
+            updateCartUI();
+        }
+
+        // Voice Recognition
+        let recognition, lastMsg = "";
+        function startVoice() {
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = "en-US";
+            recognition.continuous = true;
+            recognition.onresult = e => {
+                const text = e.results[e.results.length - 1][0].transcript.trim();
+                if (!text || text === lastMsg) return;
+                lastMsg = text;
+                $("status").textContent = "Heard: " + text;
+
+                // Voice commands for remove
+                if (/remove\s+(.*)/i.test(text)) {
+                    const match = text.match(/remove\s+(.*)/i)[1];
+                    const itemToRemove = cart.find(c => norm(c.name) === norm(match));
+                    if (itemToRemove) removeFromCart(cart.indexOf(itemToRemove));
+                    return;
+                }
+
+                const item = findBestItem(text);
+                if (item) {
+                    const index = MENU.findIndex(m => m.name === item.name);
+                    selectItem(index);
+                } else showNotFound();
+            };
+            recognition.start();
+        }
+
+        $("startBtn").onclick = () => {
+            $("startBtn").disabled = true;
+            $("stopBtn").disabled = false;
+            $("status").textContent = "Listening...";
+            startVoice();
+        };
+
+        $("stopBtn").onclick = () => {
+            if (recognition) recognition.stop();
+            $("status").textContent = "Idle";
+            $("startBtn").disabled = false;
+            $("stopBtn").disabled = true;
+        };
+
+        document.addEventListener("DOMContentLoaded", renderCarousel);
+    </script>
+
+</body>
+</html>
+
+
